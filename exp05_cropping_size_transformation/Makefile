@@ -1,0 +1,91 @@
+DEBUG        ?= 0
+PRODUCTFORM  ?= soc
+BM_MEDIA_ION ?= 0
+
+INSTALL_DIR    ?= release
+
+# 请根据实际情况设置 Sophon SDK 的根目录
+top_dir := /home/embedded-systems/sophonsdk_v3.0.0
+
+ifeq ($(PRODUCTFORM),x86)
+    CROSS_CC_PREFIX = x86_64-linux-
+else
+    CROSS_CC_PREFIX = aarch64-linux-gnu-
+endif
+
+CC  = $(CROSS_CC_PREFIX)gcc
+CXX = $(CROSS_CC_PREFIX)g++
+
+CPPFLAGS := -std=gnu++11 -fPIC -Wall -Wl,--fatal-warning
+ifeq ($(DEBUG), 0)
+    CPPFLAGS += -O2
+else
+    CPPFLAGS += -g
+endif
+
+# NATIVE API SDK
+NATIVE_SDK_HEADERS := -I$(top_dir)/include/decode
+NATIVE_SDK_LDFLAGS := -L$(top_dir)/lib/decode/$(PRODUCTFORM)
+NATIVE_SDK_LDLIBS  := -lbmion -lbmjpulite -lbmjpuapi -lbmvpulite -lbmvpuapi -lbmvideo -lbmvppapi -lyuv
+
+# FFMPEG SDK
+FF_SDK_HEADERS := -I$(top_dir)/include/ffmpeg
+FF_SDK_LDFLAGS := -L$(top_dir)/lib/ffmpeg/$(PRODUCTFORM)
+FF_SDK_LDLIBS  := -lavcodec -lavformat -lavutil -lswresample -lswscale
+
+# OpenCV SDK
+OCV_SDK_HEADERS := -I$(top_dir)/include/opencv/opencv4
+OCV_SDK_LDFLAGS := -L$(top_dir)/lib/opencv/$(PRODUCTFORM)
+OCV_SDK_LDLIBS  := -lopencv_core -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio
+
+# BMCV SDK
+BMCV_SDK_HEADERS := -I$(top_dir)/include/bmlib
+BMCV_SDK_LDFLAGS := -L$(top_dir)/lib/bmnn/$(PRODUCTFORM)
+ifeq ($(PRODUCTFORM), x86)
+BMCV_SDK_LDFLAGS := -L$(top_dir)/lib/bmnn/pcie
+endif
+BMCV_SDK_LDLIBS  := -lbmcv -lbmlib
+
+CPPFLAGS += $(NATIVE_SDK_HEADERS) $(FF_SDK_HEADERS) $(OCV_SDK_HEADERS) $(BMCV_SDK_HEADERS)
+LDFLAGS  := $(NATIVE_SDK_LDFLAGS) $(FF_SDK_LDFLAGS) $(OCV_SDK_LDFLAGS) $(BMCV_SDK_LDFLAGS)
+
+LDLIBS   := $(NATIVE_SDK_LDLIBS) $(FF_SDK_LDLIBS) $(OCV_SDK_LDLIBS) $(BMCV_SDK_LDLIBS) -lpthread -lstdc++
+
+TARGETS=bmcv_crop bmcv_resize
+MAKEFILE=Makefile
+ALLOBJS=*.o
+ALLDEPS=*.dep
+RM=rm -rf
+CP=cp -f
+
+SOURCES := bmcv_crop.cpp bmcv_resize.cpp
+
+OBJECTS:=$(patsubst %.cpp,%.o,$(SOURCES))
+DEPS:=$(patsubst %.cpp,%.dep,$(SOURCES))
+
+-include $(DEPS)
+
+.PHONY: all clean
+
+all: $(TARGETS)
+
+bmcv_crop: bmcv_crop.o
+	$(CXX) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+
+bmcv_resize: bmcv_resize.o
+	$(CXX) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+
+install: $(TARGETS)
+	install -d $(INSTALL_DIR)/bin
+	install $(TARGETS) $(INSTALL_DIR)/bin
+
+uninstall:
+	$(RM) $(INSTALL_DIR)/bin/$(TARGETS)
+
+clean:
+	$(RM) $(TARGETS)
+	$(RM) $(ALLDEPS)
+	$(RM) $(ALLOBJS)
+
+%.o: %.cpp $(MAKEFILE)
+	$(CXX) $(CPPFLAGS) -c $< -o $@ -MD -MF $*.dep

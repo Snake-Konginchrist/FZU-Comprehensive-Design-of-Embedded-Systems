@@ -1,0 +1,15 @@
+CC = g++  # 使用g++编译器
+
+CFLAGS = -Wall -std=c++11  # 编译标志，包括启用所有警告和C++11标准
+
+LIBS = -lavutil -lavcodec -lavformat  # 根据需要添加FFmpeg库
+
+TARGET = ffmpeg_encode_withRoi  # 目标可执行文件名
+
+all: $(TARGET)
+
+$(TARGET): ffmpeg_encode_withRoi.cpp
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+clean:
+	rm -f $(TARGET)

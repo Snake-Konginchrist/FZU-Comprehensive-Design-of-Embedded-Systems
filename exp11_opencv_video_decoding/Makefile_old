@@ -1,0 +1,31 @@
+# Makefile for OpenCV和FFmpeg视频解码示例
+
+# 编译器
+CXX = g++
+
+# 编译器标志
+CXXFLAGS = -std=c++11 -Wall
+
+# OpenCV标志
+OPENCV_LIBS = `pkg-config --cflags --libs opencv4`
+
+# 目标可执行文件
+TARGET = ffmpeg_decoder_with_opencv
+
+# 源文件
+SOURCES = ffmpeg_decoder_with_opencv.cpp
+
+# 对象文件
+OBJECTS = $(SOURCES:.cpp=.o)
+
+# 构建目标可执行文件的规则
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(OPENCV_LIBS)
+
+# 从源文件构建对象文件的规则
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# 清理项目的规则
+clean:
+	rm -f $(TARGET) $(OBJECTS)

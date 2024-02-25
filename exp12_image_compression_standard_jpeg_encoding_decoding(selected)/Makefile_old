@@ -1,0 +1,34 @@
+# Makefile for jpeg_encdec
+
+# 编译器
+CC = g++
+
+# 编译选项
+CFLAGS = -std=c++11 `pkg-config --cflags opencv`
+
+# 链接选项
+LDFLAGS = `pkg-config --libs opencv`
+
+# 目标文件
+TARGET = jpeg_encdec
+
+# 源文件
+SRCS = jpeg_encdec.cpp
+
+# 目标文件
+OBJS = $(SRCS:.cpp=.o)
+
+# 生成目标文件
+all: $(TARGET)
+
+# 链接生成可执行文件
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LDFLAGS)
+
+# 生成目标文件
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# 清理
+clean:
+	rm -f $(OBJS) $(TARGET)

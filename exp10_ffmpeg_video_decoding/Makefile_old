@@ -1,0 +1,18 @@
+CC = g++
+CFLAGS = -Wall
+LIBS = -lavformat -lavcodec -lswscale
+
+SRCS = ffmpeg_decoder.cpp videodec_ffmpeg.cpp
+OBJS = $(SRCS:.cpp=.o)
+TARGET = ffmpeg_decoder
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(OBJS) $(TARGET)
